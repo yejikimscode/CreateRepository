@@ -1,0 +1,284 @@
+---
+---
+
+```{r}
+
+
+# 1>7.9 
+set.seed(1)
+library(MASS)
+attach(Boston)
+
+#(a)
+# lm.fit3 = lm(nox ~ dis + I(dis^2) + I(dis^3), data = Boston)
+lm.fit3 = lm(nox ~ poly(dis, 3), data = Boston)  #nox예측하는데 설명변수:dis
+summary(lm.fit3)
+y=Boston[,"nox"]
+y_hat3 = predict(lm.fit3,newdata = Boston)
+mean((y-y_hat3)^2)   #0.003822345
+
+
+plot(nox ~ dis, data = Boston, col = "darkgrey")  #nox를 도심과의 거리라고 할때 도심과 가까워질수록 범죄율이 높아진다. 
+x = seq(1,12,length=100)
+y=predict(lm.fit3, newdata=data.frame(dis=x))
+lines(x,y,col="red")
+
+#(b)  Calculate MSE when for poly(dis,n) for n=1, ....,10
+MSE = rep(NA, 10)
+for (n in 1:10) {
+lm.fit3 = lm(nox ~ poly(dis, n), data = Boston) 
+summary(lm.fit3)
+y = Boston[,"nox"]
+y_hat3 = predict(lm.fit3,newdata = Boston)
+MSE[n] = mean((y-y_hat3)^2)
+}
+MSE
+plot(MSE)  #train data이니까 복잡할수록 MSE가 작아짐. 따라서 10이 제일 작음.
+
+#(c)  CV를 통해 제일 좋은 차원을 찾아보기
+library(boot)
+set.seed(1)
+all.deltas = rep(NA, 10)
+
+for (i in 1:10) {
+  glm.fit = glm(nox ~ poly(dis, i), data = Boston)
+  all.deltas[i] = cv.glm(Boston, glm.fit, K = 10)$delta[1]#delta: cv-results  CV로 MSE구하는것
+}
+plot(MSE)  #눈으로 봐서는 3차원이 가장 좋다.
+
+#(d)
+library(splines)
+sp.fit = lm(nox ~ bs(dis, df = 4), data = Boston)   #bs:spline
+summary(sp.fit)
+
+x=seq(1,12,length=200)
+y=predict(sp.fit, newdata=data.frame(dis = x))
+plot(nox ~ dis, data = Boston, col="darkgrey")
+lines(x,y,col="red")
+
+#knots?
+summary(dis)
+aa=bs(dis, df = 4)
+attr(aa, "knots")
+sp.fit = lm(nox ~ bs(dis, df = 4, knots=c(2, 3, 5)), data = Boston)
+summary(sp.fit)
+
+
+#(e)
+MSE = rep(NA, 16)
+for (i in 3:16) {
+  lm.fit = lm(nox ~ bs(dis, df = i), data = Boston)
+  my.pred = predict(lm.fit)
+  MSE[i] = mean((nox-my.pred)^2)
+}
+MSE[-c(1, 2)]
+plot(MSE[-c(1, 2)])
+#차원이 높아질수록 train MSE가 점점 줄어든다.
+
+#(f)
+all.cv = rep(NA, 16)
+for (i in 3:16) {
+  lm.fit = glm(nox ~ bs(dis, df = i, knots=c(1,2,4)), data = Boston)
+  all.cv[i] = cv.glm(Boston, lm.fit, K = 5)$delta[1]
+} #clm사용해야하나 glm밖에 용납이 안되므로 glm사용
+#설명변수:i차원. cv는 5를 해줌
+
+plot(3:16, all.cv[-c(1, 2)], lwd = 2, type = "l", xlab = "df", ylab = "CV error")    # 5가 적절해보임
+
+
+#7.10(a,b,c)
+set.seed(1)
+library(ISLR)
+library(leaps)
+attach(College)
+train = sample(length(Outstate), length(Outstate)/2)
+test = -train
+College.train = College[train, ]
+College.test = College[test, ]
+#Use the following set of variables for part (b) and (c)
+# Private + Room.Board + PhD + perc.alumni + Expend+ Grad.Rate
+reg.fit = regsubsets(Outstate ~ ., data = College.train, nvmax = 17, method = "forward")
+reg.summary = summary(reg.fit)
+par(mfrow = c(1, 3))
+plot(reg.summary$cp, xlab = "Num of Variable", ylab = "Cp", type = "l")
+min.cp = min(reg.summary$cp)
+std.cp = sd(reg.summary$cp)
+abline(h = min.cp + 0.2 * std.cp, col = "blue", lty = 2)
+abline(h = min.cp - 0.2 * std.cp, col = "blue", lty = 2)
+plot(reg.summary$bic, xlab = "Num of Variable", ylab = "BIC", type = "l")
+min.bic = min(reg.summary$bic)
+std.bic = sd(reg.summary$bic)
+abline(h = min.bic + 0.2 * std.bic, col = "blue", lty = 2)
+abline(h = min.bic - 0.2 * std.bic, col = "blue", lty = 2)
+plot(reg.summary$adjr2, xlab = "Num of Variable", ylab = "Adjusted R2", type = "l", ylim = c(0.4, 0.84))
+max.adjr2 = max(reg.summary$adjr2)
+std.adjr2 = sd(reg.summary$adjr2)
+abline(h = max.adjr2 + 0.2 * std.adjr2, col = "red", lty = 2)
+abline(h = max.adjr2 - 0.2 * std.adjr2, col = "red", lty = 2)
+# best: 6
+
+reg.fit = regsubsets(Outstate ~ ., data = College, method = "forward")
+coefi = coef(reg.fit, id = 6)
+names(coefi)
+
+#(b)
+library(gam)
+gam.fit = gam(Outstate ~ Private + s(Room.Board, df = 2) + s(PhD, df = 2) +s(perc.alumni, df = 2) + s(Expend, df = 5) + s(Grad.Rate, df = 2), data = College.train)
+par(mfrow = c(2, 3))
+plot(gam.fit, se = T, col = "blue")
+
+
+#(c)
+gam.pred = predict(gam.fit, newdata = College.test)
+gam_test = College.test[,"Outstate"]
+gam.err = mean((gam_test - gam.pred)^2)
+gam.err
+
+gam.tss = mean((gam_test - mean(gam_test))^2)
+test.rss = 1 - gam.err/gam.tss
+test.rss
+
+lm.fit = gam(Outstate ~ Private + Room.Board + PhD + perc.alumni + Expend+ Grad.Rate, data = College.train)
+lm.pred = predict(lm.fit, College.test)
+lm.err = mean((gam_test - lm.pred)^2)
+lm.err
+#lm.err: 3841483  test.rss: 0.7660016    lm.err: 3841483
+
+#3> 8.8   MSE 고치기
+# linear regression의 Tree버전
+#(a) train data와 test data 나누기
+library(ISLR)
+attach(Carseats)
+head(Carseats)
+
+set.seed(3)
+
+train = sample(dim(Carseats)[1], dim(Carseats)[1]/2)
+Carseats.train = Carseats[train, ]
+Carseats.test = Carseats[-train, ]
+
+
+#(b) use train date to fit tree
+library(tree)
+tree.carseats = tree(Sales ~ ., data = Carseats.train)  #원래 lm인데 tree로 바꿔준 것
+summary(tree.carseats)
+
+plot(tree.carseats)
+text(tree.carseats, pretty = 0)
+
+#Calculate test MSE
+y_hat_tree = predict(tree.carseats, newdata=Carseats.test)
+#tree.carseats를 사용해서 예측, 새로운 데이터는 Carseats.test
+y_test= Carseats.test[, "Sales"]
+mean((y_hat_tree-y_test)^2)  # MSE:4.707
+
+
+#(c)  (b) Tree ->Prune
+#tree.carseats는 train data로 fitting한 가장 큰 tree이다. 이거보다 작은 tree들을 고려하는데 그 tree 중에서 CV로 예측력이 가장 좋은것을 찾으면 된다. (test set은 아직 사용 안했으니까)
+cv.carseats = cv.tree(tree.carseats, FUN = prune.tree)
+par(mfrow = c(1, 2));
+plot(cv.carseats$size, cv.carseats$dev, type = "b") 
+#X축 : tree의 크기, y축은 MSE같은거. #5번이 제일 좋다. 
+plot(cv.carseats$k, cv.carseats$dev, type = "b") #k is alpha (penalty of tree size)
+
+pruned.carseats = prune.tree(tree.carseats, best = 5) #train set을 사용해서 제대로 한번 돌려줌
+
+par(mfrow = c(1, 1))
+plot(pruned.carseats)
+text(pruned.carseats, pretty = 0)
+#using Pruned tree, Calculate test MSE
+y_hat_pruned = predict(pruned.carseats, newdata=Carseats.test)
+mean((y_hat_pruned-y_test)^2)  # MSE:5.16 (더 안좋아졌다.)
+
+
+#(d)  Bagging estimation --> Test MSE
+#Bagging == Random Forest with mtry = full
+library(randomForest)
+dim(Carseats.train)   #11 dimention
+head(Carseats.train)  #설명변수는 10개
+bag.carseats = randomForest(Sales ~ ., data = Carseats.train, mtry = 10, ntree = 500,importance = T) # Bagging (mtry=10), 나무 500개를 만들겠다.  importance = T :어느 설명변수가 중요한지 계산해주는 것 
+
+#Calculate test MSE
+y_hat_bag = predict(bag.carseats, newdata=Carseats.test)
+mean((y_hat_bag-y_test)^2)  # MSE:2.589
+
+importance(bag.carseats)   #ShelveLoc이 가장 중요하고 Price가 그 다음으로 중요...등 %IncMSE가 높을수록 중요하다. 
+
+#(e) Random Forest
+rf.carseats = randomForest(Sales ~ ., data = Carseats.train, mtry = 5, ntree = 500, importance = T)   #랜덤하게 설명변수 5개를 골라서 그 중에서 가장 좋은 것을 찾음. 
+
+#Calculate test MSE
+y_hat_rf = predict(rf.carseats, newdata=Carseats.test)
+mean((y_hat_rf-y_test)^2 )  # MSE:2.579
+
+#decision: Random Forest와 Bagging이 가장 좋았습니다. 
+importance(rf.carseats)   #ShelveLoc이 가장 중요하고 Price가 그 다음으로 중요...등 %IncMSE가 높을수록 중요하다. 
+#m을 변경하면 test MSE가 2.6에서 3사이로 달라진다. 
+
+# 4> 8.9   #답이 다 다름 확인해보기.
+# Classification : logistic regression의 Tree 버전
+#(a)
+library(ISLR)
+attach(OJ)
+head(OJ)
+table(OJ$Purchase)
+set.seed(1013)
+
+dim(OJ)
+
+train = sample(dim(OJ)[1], 800) #out of 1070 data #800개의 train set과 나머지는 test set
+OJ.train = OJ[train, ]
+OJ.test = OJ[-train, ]
+
+
+#(b)
+library(tree)
+oj.tree = tree(Purchase ~ ., data = OJ.train)
+summary(oj.tree)
+
+y_train_tree = predict(oj.tree, newdata=OJ.train, type="class")
+y_train = OJ.train[,"Purchase"]
+table(y_train_tree, y_train)
+#terminal nodes:  7 ,training error rate: 0.1612 
+
+#(e)
+y_test_tree= predict(oj.tree, newdata=OJ.test, type = "class")
+y_test = OJ.test[,"Purchase"]
+table(y_test_tree, y_test)
+(149+76)/270   # test 정답률: 0.8333333
+
+#(f,g) Prune Tree
+# 1> Determine the size of the tree
+# train data를 이용하여 구해야함. 
+cv.oj = cv.tree(oj.tree, FUN = prune.misclass)
+par(mfrow = c(1, 2))
+#plot(cv.oj$size, cv.oj$dev, type = "b") #tree size in the prunning
+plot(cv.oj$size, cv.oj$dev, type = "b", xlab = "Tree Size", ylab = "Deviance")
+
+#(h)
+#Assume that best tree size = 5
+
+#(i)
+oj.pruned = prune.tree(oj.tree, best = 5)
+
+y_hat_pruned = predict(oj.pruned, OJ.test, type = "class")
+table(y_hat_pruned, y_test)
+(115+94)/270 #0.7740741
+
+#(j)
+summary(oj.pruned)
+#error rate: 0.195  prunded가 error rate 더 높다. 
+
+#(k)
+pred.unpruned = predict(oj.tree, OJ.test, type = "class")
+misclass.unpruned = sum(OJ.test$Purchase != pred.unpruned)
+misclass.unpruned/length(pred.unpruned)
+
+pred.pruned = predict(oj.pruned, OJ.test, type = "class")
+misclass.pruned = sum(OJ.test$Purchase != pred.pruned)
+misclass.pruned/length(pred.pruned)
+
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
