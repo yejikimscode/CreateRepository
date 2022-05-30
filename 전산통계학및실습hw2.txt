@@ -1,0 +1,43 @@
+1.
+Data dfd;
+mu=1; var=1;  sd=SQRT(var);
+ DO i=1 to 3000; 
+ Z=RANNOR(0)*sd+mu;
+ X= ranpoi(0, 1);
+ OUTPUT;
+ END;
+ run;
+PROC GCHART DATA=dfd; 
+  VBAR Z /  levels=15;
+  VBAR X / levels=15;
+RUN; 
+
+
+2.
+
+Data dfd;
+mu=10; var=1;  sd=SQRT(var);
+ DO i=1 to 3000; 
+ Z=RANNOR(0)*sd+mu;
+ X= ranpoi(0, 1);
+ OUTPUT;
+ END;
+ run;
+PROC GCHART DATA=dfd; 
+  VBAR Z /  levels=15;
+  VBAR X / levels=15;
+RUN; 
+
+3. 
+Data dfd;
+mu=100; var=1;  sd=SQRT(var);
+ DO i=1 to 3000; 
+ Z=RANNOR(0)*sd+mu;
+ X= ranpoi(0, 1);
+ OUTPUT;
+ END;
+ run;
+PROC GCHART DATA=dfd; 
+  VBAR Z /  levels=15;
+  VBAR X / levels=15;
+RUN; 

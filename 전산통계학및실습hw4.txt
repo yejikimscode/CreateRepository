@@ -1,0 +1,83 @@
+1.
+1)
+DATA score;
+INPUT id dept$ age test1-test3 gender$;
+CARDS;
+001 stat 22 9 12 14 m
+002 law 21 10 15 7 f
+003 econ 23 10 17 11 f
+004 math 27 16 17 8 m
+005 engl 21 11 12 16 f
+006 stat 22 18 18 18 f
+007 econ 7 17 18 18 m
+RUN;
+PROC PRINT DATA=score; 
+RUN;
+
+2)
+Data score2;
+set score;
+minscore = min(of test1-test3);
+average = (test1+test2+test3) / 3;
+if minscore>=10 then result = 'pass';
+ else result = 'fail';
+run;
+proc print data = score2;
+run;
+
+3)
+Data female;
+set score2;
+if gender = 'f';
+run;
+proc print data=female;
+run;
+
+
+2.
+1)
+Data mid;
+input name$ sex$ pre mid;
+cards;
+±èÃ¶¼ö  m   30    10
+°­¹ÎÈ£  m   45     50
+ÀÌ¿µÈñ  f      .   15
+¹ÚÁö¼ö  f      .    20
+ÃÖº´È£  f      .     8
+run;
+proc print data=mid;
+run;
+
+Data final;
+input name$ sex$ pre final;
+cards;
+ÀÌ¿µÈñ f   32   10
+±èÃ¶¼ö m    .   40
+¹ÚÁö¼ö f   15   20
+°­¹ÎÈ£ m    .   15
+run;
+proc print data=final;
+run;
+
+2)
+ Data abab;
+ set mid final; 
+ run;
+ proc print; run;
+
+3)
+ DATA abc;
+ SET mid;
+ SET final;
+ RUN;
+ PROC PRINT; RUN;
+
+4)
+proc sort data=mid; By name; run;
+proc sort data=final; By name; run;
+data dbd;
+set mid final;
+by name;
+run;
+proc print;
+run;

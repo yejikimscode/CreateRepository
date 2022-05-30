@@ -1,0 +1,46 @@
+Data data1 data2;
+Input id gender$ income deposit id gender$ income deposit;
+cards;
+1 M 30 10 1 M 60 40
+
+2 M 45 50 2 M . 20
+
+3 F 60 15 3 F 40 .
+
+4 F 46 20 4 F . 26
+
+5 M 10 8 5 M 15 9
+run;
+
+a)
+proc sort data = data1; by id; run;
+proc sort data = data2; by id; run;
+data inc_dep1;
+merge data1 data2;
+by id;
+run;
+proc print data=inc_dep1; run;
+
+b)
+proc sort data = data1; by id; run;
+proc sort data = data2; by id; run;
+
+proc sort data=inc_dep1 out=inc_dep2;
+update data1 data2;
+by id;
+run;
+proc print data=inc_dep2; run;
+
+c)
+merge로 결합한 것은 뒤에 데이터 값을 마지막에 가져오고 update로 결합한 것은
+원래의 값을 유지하게 된다
+
+d)
+data ind_dep_total;
+merge data1(rename=(income=income1) rename=(deposit=(deposit1)) data2(rename=(income=income2) rename=(deposit=(deposit2));
+income_total=income1+income2;
+deposit_total=deposit1+deposit2;
+drop income deposit;
+run;
+proc print data=ind_dep_total; run; 
+ 

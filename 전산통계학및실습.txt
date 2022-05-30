@@ -1,0 +1,45 @@
+전산통계학및실습
+김예지 1602019
+
+
+
+1번 
+data a;
+do x=1 to 4 by 0.01;
+z1=pdf('chisq', x, 1);
+z2=pdf('chisq', x, 10);
+z3=pdf('chisq', x, 20);
+output;
+end;
+run;
+
+proc plot data=a;
+plot z1*x='a' z2*x='b' z3*x='c'/overlay;
+run;
+
+
+2번 
+data b;
+pi=3.14159265354;
+rho1=0.8; rho2=-0.4;
+mu1=0;
+mu2=3;
+do x=-5 to 5 by 0.1;
+do y=-5 to 5 by 0.1;
+const1=1/(2*pi*sqrt(1-rho1*rho1));
+const2=1/(2*pi*sqrt(1-rho2*rho2));
+ssq1=(x-mu1)**2-2*rho1*(x-mu1)*(y-mu1)+(y-mu1)**2;
+ssq2=(x-mu2)**2-2*rho2*(x-mu2)*(y-mu2)+(y-mu2)**2;
+cc1=-1/(2*(1-rho1*rho1));
+cc2=-1/(2*(1-rho2*rho2));
+f1=const1*exp(cc1*ssq1);
+f2=const2*exp(cc2*ssq2);
+z=0.7*f1+0.3*f2;
+output;
+end;
+end;
+run;
+
+proc gcontour data=b;
+plot y*x=z;
+run;
