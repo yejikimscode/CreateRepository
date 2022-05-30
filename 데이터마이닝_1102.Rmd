@@ -1,0 +1,119 @@
+---
+title: '11021107'
+output: word_document
+---
+
+```{r}
+####1202####
+#9.6 Lab: Support Vector Machines
+#9.6.1 Support Vector Classifier
+#코드 이해할 필요는 없음. 가상의 데이터를 만들어준거.
+set.seed(1)
+x=matrix(rnorm(20*2), ncol=2)
+y=c(rep(-1, 10), rep(1, 10))
+x[y==1,] = x[y==1, ] + 1
+plot(x, col=(3-y))
+dat = data.frame(x=x, y=as.factor(y))
+#Test data
+set.seed(10)
+xtest=matrix(rnorm(20*2),  ncol=2)
+ytest = sample(c(-1,1), 20, rep=TRUE)
+xtest[ytest==1,]=xtest[ytest==1,]+1
+testdata = data.frame(x=xtest, y=as.factor(ytest))
+
+x  #x1i,x2i
+y
+plot(x[1:20, 2], x[1:20, 1] , col=y+3) #빨간점이 -1, 파란점이 1
+
+
+#install.packages("e1071")
+library(e1071)
+
+head(dat)  #x.1:나이, x.2: 연봉, y:병원 갔나 안갔나.
+svmfit1 = svm(y~., data=dat, kernel="linear", cost=10, scale=FALSE)
+#kernel="linear": 직선으로만 나눠지는 것
+# cost=10 : 10개정도 틀려도 된다.
+summary(svmfit1) #Number of Support Vectors:  7 말고 정보 얻을거 없
+
+plot(svmfit1, dat, xlim=c(-3, 3))  #경계선 알기위한 그림. x들이 support vector
+# 핑크 영역이 1 파란 영역이 -1
+# 빨간 점들은 실제 y값이 1, 까만 점은 실제 y값이 -1인것. 
+points(0,0)
+points(-1,0)
+#support vectors are marked with x
+svmfit1$index
+x[1,]
+x[svmfit1$index, ]
+points(x[svmfit1$index, 2],x[svmfit1$index, 1],  pch=10)
+
+summary(svmfit1)
+#smaller cost margin?  #고차원 모데
+svmfit2 = svm(y~., data=dat, kernel="linear", cost=1, scale=FALSE) #많이 틀리면 안된다고 하는 것 
+plot(svmfit2, dat, xlim=c(-3, 3))
+summary(svmfit2) #Number of Support Vectors:  10 더 많아짐!!!델
+#R에서 cost는 교과서 cost의 역수 정도로 이해하자.
+
+
+tune.out = tune(svm, y~., data=dat, kernel="linear", range=list(cost=c(0.001, 0.01, 0.1, 1, 5, 10, 100)))
+# cost=c(0.001, 0.01, 0.1, 1, 5, 10, 100) 중에 한명 골라야한다. 예측력이 가장 좋은것.(tune써서)
+# cv로 찾아주는 것
+summary(tune.out)
+#3 1e-01  0.15  0.3374743 이게 젤 좋다고 보자. cost=0.1로 다시 돌려보기
+#error가 같으면 dispersion 높은걸 선택하면 됨.
+svmfit3 = svm(y~., data=dat, kernel="linear", cost=0.1, scale=FALSE)
+
+ypred = predict(svmfit3, newdata = testdata)
+table(predict = ypred, truth = testdata$y)
+# ypred: 내가 pred한거, testdata$y: 실제 y값.
+#20개 데이터중에 16개는 올바르게 되고 4개는 잘못됐다.
+
+
+#####1207
+#9.6.2 Support Vector Machine
+#데이터 어떻게 생긴지 중요하지 않다.
+set.seed(1)
+x=matrix(rnorm(200*2), ncol=2)
+x[1:100,]=x[1:100, ]+2
+x[101:150,]=x[101:150, ]-2
+y=c(rep(1,150), rep(2,50))
+dat = data.frame(x=x, y=as.factor(y))
+
+plot(x, col=y, pch = y)
+train=sample(200,100)
+svmfit1 = svm(y~., data=dat[train,], kernel="radial", gamma=1, cost=1) 
+#cost 넉넉하다. 틀리나 마다 필요없단것.
+plot(svmfit1, dat[train,])
+y.h1=predict(svmfit1, newdata=dat[train,])
+table(y.h1, y[train]) #100개 중에 11개 잘못됨 
+
+
+y.h1=predict(svmfit1, newdata=dat[-train,])
+table(y.h1, y[-train])#100개 중에 11개 잘못됨 
+
+
+svmfit2 = svm(y~., data=dat[train,], kernel="radial", gamma=1, cost=100000)
+#cost: 1/100000
+plot(svmfit2, dat[train,])
+y.h2=predict(svmfit2, newdata=dat[train,])
+table(y.h2, y[train]) # 1개 잘못됨 
+
+y.h2=predict(svmfit2, newdata=dat[-train,])
+table(y.h2, y[-train])   # 13개 잘못됨 . 과적합시킨
+
+
+set.seed(1)
+# cost와 gamma 둘 다 잡아보자
+tune.out = tune(svm, y~., data=dat[train, ], kernel="radial", ranges=list(cost=c(0.1, 1, 10, 100, 1000),
+                                                                          gamma=c(0.5, 1, 2, 3, 4)))
+
+summary(tune.out)  #best parametor 나와있음. error도 나와있음.
+
+svmfit.best = svm(y~., data=dat[train,], kernel="radial", gamma=0.5, cost=1)
+y.h.best=predict(svmfit.best, newdata=dat[train,])
+table(y.h.best, y[train]) #12개 틀림 
+
+y.h.best=predict(svmfit.best, newdata=dat[-train,])
+table(y.h.best, y[-train])  #12개 틀림
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

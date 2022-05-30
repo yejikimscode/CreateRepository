@@ -1,0 +1,90 @@
+---
+title: "hw5"
+output: word_document
+---
+
+```{r}
+#hw5
+#9.5.bcdefgh
+
+library(e1071)
+set.seed(421)
+x1 = runif(500) - 0.5
+x2 = runif(500) - 0.5
+y = 1 * (x1^2 - x2^2 > 0)
+
+#(b)
+plot(x1, x2, col=y+1)
+#빨간점은 y=1, 검정점은 y=0
+#직선 경계는 좀 힘들어보임 
+
+#(c) logistic reg
+lm.fit = glm(y ~ x1 + x2, family = binomial)
+summary(lm.fit)
+
+#(d)
+data = data.frame(x1 = x1, x2 = x2, y = y)
+lm.prob = predict(lm.fit, newdata=data, type = "response") #거의 0.5근처이다. 
+hist(lm.prob)  #histogram. 정말 0.5 근처이다. 0.5이상인 것을 하면 다 1이라고 예측 할 것이다. 
+#0.52에서 잘라줘보자.
+y.hat.log = ifelse(lm.prob>0.52, 1, 0)  
+table(y.hat.log, y)  #너무 많이 틀렸다. 
+(table(y.hat.log, y)[1,1]+table(y.hat.log, y)[2,2])/500 #정답률이 안좋음 
+
+cutpoints = seq(0.4, 0.6, length=101) #0.4~0.6까지 101개를 만든다. 
+#얼마나 잘 맞추는지 기록해보자. train data로만 하는 것.
+accuracy=rep(NA, 101)
+for( i in 1:101){
+  y.hat.log = ifelse(lm.prob>cutpoints[i], 1, 0)  
+  accuracy[i]= mean(y.hat.log == y)
+}
+
+which.max(accuracy)  #71번이 accuracy가 제일 좋다. 
+cutpoints[71]   #71번의 cutpoint를 알아내서 잘라주자.
+#0.54에서 잘라주면 좋다.
+y.hat.log = ifelse(lm.prob>0.54, 1, 0)  
+plot(x1, x2, col=y.hat.log+1)
+#분류가 잘 된건지 table로 확인해보기.
+table(y.hat.log, y) #500개중에 297개 잘 분류됐음. 
+#하지만 부질없는 짓이었음. 정확도도 떨어짐.
+
+
+#(e)
+lm.fit2 = glm(y ~ I(x1^2) + I(x2^2) + I(x1 * x2)+x1+x2, data = data, family = binomial)
+lm.prob2 = predict(lm.fit2, data, type = "response")
+hist(lm.prob2) #prob이 0아니면 1 가까이 많이 나옴. 너무 모델이 확실한 것. 
+y.hat.log2 = ifelse(lm.prob2>0.5, 1, 0) 
+table(y.hat.log2, y)   #100% 잘 분류됐다.  
+
+#(f)
+lm.prob = predict(lm.fit, data, type = "response")
+lm.pred = ifelse(lm.prob > 0.5, 1, 0)
+data.pos = data[lm.pred == 1, ]
+data.neg = data[lm.pred == 0, ]
+plot(data.pos$x1, data.pos$x2, col = "blue", xlab = "X1", ylab = "X2", pch = "*")
+points(data.neg$x1, data.neg$x2, col = "red", pch = 1)
+
+#(g) # 잘 안됨 #svc
+svm.fit = svm(as.factor(y) ~ x1 + x2, data, kernel = "linear", cost = 0.1)
+svm.pred = predict(svm.fit, data)
+data.pos = data[svm.pred == 1, ]
+data.neg = data[svm.pred == 0, ]
+plot(data.pos$x1, data.pos$x2, col = "blue", xlab = "X1", ylab = "X2", pch = "*")
+points(data.neg$x1, data.neg$x2, col = "red", pch = 1) 
+#1은 파란색, 0은 빨간색으로 하려고 했으나 다 1로 만들어버렸다.
+# 전부다 1이 돼서 예측력이 50%정도 밖에 안나온다. 
+
+
+#(h)
+svm.fit = svm(as.factor(y) ~ x1 + x2, data, gamma = 1)
+svm.pred = predict(svm.fit, data)
+data.pos = data[svm.pred == 1, ]
+data.neg = data[svm.pred == 0, ]
+plot(data.pos$x1, data.pos$x2, col = "black", xlab = "X1", ylab = "X2", pch = "*")
+points(data.neg$x1, data.neg$x2, col = "red", pch = 1)
+#복잡한 모형도 잘 맞출 수 있다. 
+
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

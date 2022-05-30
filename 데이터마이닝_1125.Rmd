@@ -1,0 +1,77 @@
+---
+title: '1125'
+output: word_document
+---
+
+```{r}
+
+####1125#####
+
+# 8.3.3 Bagging and Random Forests
+library(tree)
+library(ISLR)
+library(MASS)
+data(Boston)
+head(Boston)
+dim(Boston)   #506개 observation, 13개 설명변수 + 1개 반응변수 = 14
+set.seed(1)
+train = sample(1:nrow(Boston), nrow(Boston)/2) #506개중에 253개를 골라라
+
+library(randomForest)
+#Bagging
+set.seed(1)
+bag.boston = randomForest(medv~., data=Boston, subset=train, mtry=13, importance=TRUE)
+#mtry=13 :설명변수 전부 다 사용, subset=train : train만써라
+# importance=TRUE :variable importance measure
+#13 explanatory variables
+# mtry=5 면 random forest가 된다. 13보다 작은 값
+
+bag.boston   #별로 얻어지는거 없음
+
+#예측값을 찾아보자!!!
+yhat.test.bag = predict(bag.boston, newdata=Boston[-train,]) #-train, 으로 test값만 볼 수 있게 해줌. 모델을 예측한 값
+
+y.test = Boston[-train, "medv"]  #실제 ytest값
+plot(yhat.test.bag, y.test)
+abline(0,1)  #직선위에 있는걸 보니 잘 예측했다
+mean((yhat.test.bag - y.test)^2) #MSE
+
+#Random Forests
+set.seed(1)
+rf.boston = randomForest(medv~., data=Boston, subset=train, mtry=6, importance=TRUE)
+yhat.test.rf = predict(rf.boston, newdata=Boston[-train,])
+mean((yhat.test.rf - y.test)^2)  #MSE
+#Random Forests 가 더 좋다.
+
+#Tree
+tree.boston = tree(medv~., data=Boston, subset=train)
+yhat.test.tree = predict(tree.boston, newdata=Boston[-train,])
+mean((yhat.test.tree - y.test)^2) #MSE너무 큼. 안좋다!
+plot(tree.boston)
+text(tree.boston, pretty=0)
+
+#bagging과 rf는 트리 그릴 수 없으니 중요도 보는 것.MSE 측면에서 얼마나 중요한지
+importance(rf.boston)
+varImpPlot(rf.boston)
+
+#Boosting
+library(gbm)
+set.seed(1)
+boost.boston <- gbm(medv~., data=Boston[train, ], distribution="gaussian", n.trees=5000,
+                    interaction.depth=4, shrinkage=0.001)
+#distribution="gaussian": 분류하는게 아니고 예측하는 것이다는 의미
+#interaction.depth=4 : tree노드 갯수가 한 트리당 4개씩 
+# shrinkage=0.001: 람다
+summary(boost.boston)
+
+yhat.boost = predict(boost.boston, newdata=Boston[-train,], n.trees=5000)
+mean((yhat.boost - y.test)^2) #MSE
+#다른 것들과 MSE 비교해서 뭐가 더 좋은지 보기.
+
+par(mfrow=c(1,2))
+plot(boost.boston, i="rm")  #rm이 높을수록 집값이 높구나
+plot(boost.boston, i="lstat")  #lstat이 높을수록 집값이 떨어진다. lstat: 정부로부터 식료품 지원받는 집안
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

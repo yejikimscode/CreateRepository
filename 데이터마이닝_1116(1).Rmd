@@ -1,0 +1,46 @@
+---
+title: "1116(1)"
+output: word_document
+---
+
+```{r}
+
+##1116
+library(tree)
+library(ISLR)
+
+#8.3.2 Fitting regression trees
+library(MASS)
+set.seed(1)
+train = sample(1:nrow(Boston), nrow(Boston)/2)  #train과 test 데이터 나눔
+head(Boston) #medv 주목. 집값을 알아맞추는게 우리의 목적
+tree.boston = tree(medv~., Boston, subset=train)  #tree 만들기.
+#medv가 y 값인것. x자리에 .을 찍은건 medv 빼고 다 쓰란것. subset=train: train만 써라
+summary(tree.boston) #얻어지는거 별로 없음.
+tree.boston
+
+plot(tree.boston)
+#집값을 알기위해 가장 중요한 변수는 lstat
+text(tree.boston)
+tree.boston  #사람이 253명있다. 아무것도 안나갔으면 전체평균이 21.79.  19450.0은 무시해도 됨  1) -> 2) -> 4) -> 8)
+#      -> 3) 
+# final load는 끝에 *표시 있음
+
+
+
+
+#Prune
+cv.boston = cv.tree(tree.boston)
+cv.boston
+prune5.boston = prune.tree(tree.boston, best=5)
+plot(prune5.boston)
+text(prune5.boston, pretty=0)
+
+y.test = Boston$medv[-train]
+y.hat.test = predict(prune5.boston, newdata=Boston[-train, ])
+mean((y.test-y.hat.test)^2)
+plot(y.hat.test, y.test)
+abline(0,1)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
