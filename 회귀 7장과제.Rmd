@@ -1,0 +1,41 @@
+---
+title: "7장과제"
+output: word_document
+---
+
+```{r}
+#7.1. State the number of degrees of freedom that are associated with each of the following extra sums of squares: (1) SSR(XtlX2 ); (2) SSR(X2 IXt, X 3 ); (3) SSR(X" X2 1X3, X4); (4) SSR(X" X2 , X31X4, Xs)· 
+
+#7.4. Refer to Grocery retailer Problem 6.9.
+#a. Obtain the analysis of variance table that decomposes the regression sum of squares into extra sums of squares associated with X,; with X3 , given X,; and with X2 , given X, and X 3 .
+#b. Test whether X 2 can be dropped from the regression model given that X, and X 3 are retained. Use the F* test statistic and ex = .05. State the alternatives, decision rule, and conclusion. What is the P-value of the test?
+#c. Does SSR(X,) +SSR(X2 IX,) equal SSR(X2) +SSR(XtlX2) here? Must this always be the case?
+  
+#7.5. Refer to Patient satisfaction Problem 6.15.
+#a. Obtain the analysis of variance table that decomposes the regression sum of squares into extra sums of squares associated with X2 ; with X" given X2; and with X3 , given X2 and X,.
+#b. Test whether X3 can be dropped from the regression model given that X, and X2 are retained. Use the F* test statistic and level of significance .025. State the alternatives, decision rule, and conclusion. What is the P -yalue of the test?
+
+#7.6. Refer to Patient satisfaction Problem 6.15. Test whether both X2 and X3 can be dropped from the regression mOdel given that X! is retained. Use ex ~ .025. State the alternatives, decision rule, and conclusion. What is the P-valu~ of the test? 
+
+# 7.13. Refer to Grocery retailer Problem 6.9. Calculate R~I' R~2' Rf2' Rh 1 2' R~2P' R~2113' and R2.
+# Explain what each coefficient measures and interpret your results.
+
+#7.18. Refer to Patient satisfaction Problem 6.15. 
+#a. Transform the variables by means of the correlation transformation (7.44) and fit the standardized regression model (7.4S).
+# b. Calculate the coefficients of determination between all pairs of predictor variables. Do these indicate that it is meaningful here to consider the standardized regression coefficients as indicating the effect of one predictor variable when the others are held constant?
+# c. Transform the estimated standardized regression coefficients by means of (7.S3) back to the ones for the fitted regression model in the original variables. Verify that they are the same as the ones obtained in Problem 6.1Sc. 
+
+
+# 7.26. Refer to Patient satisfaction Problem 6.15.
+#a. Fit first-order linear regression model (6.1) for relating patient satisfaction (Y) to patient's age (Xd and severity of illness (X2 ). State the fitted regression function.
+# b. Compare the estimated regression coefficients for patient's age and severity of illness obtained in part (u) with the corresponding coefficients obtained in Problem 6.15c. What do you find? g
+# c. Does SSR(Xd equal SSR(XIIX3) here? Does SSR(XI ) equal SSR(X2 IX3)i'
+#d. Refer to the con-elation matrix obtuined in Problem 6.15b. What bearing does it have on your findings in patts (b) and (c)?
+
+
+
+
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

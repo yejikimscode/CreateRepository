@@ -1,0 +1,122 @@
+---
+---
+
+```{r}
+#Brown-Forsythe test in Simple Linear Regression
+#For illustration purpose, we use Table 1 in Chapter 1.
+ta01 <- read.table("CH01TA01.txt"); names(ta01) <- c("X", "Y")
+ord <- order(ta01$X); ta01 <- ta01[ord,]; attach(ta01)
+#resudual만들기
+lm.ta01 <- lm(Y~X, data=ta01)
+resid <- lm.ta01$resid
+resid
+plot(resid) #패턴 안보임. 독립성 만족
+plot(X, resid) #등분산성도 만족, 독립성도 만족
+qqnorm(resid)
+qqline(resid)#normality만족, 등분산성도 만족, 정규성도 만족
+#MSE
+lm.ta01
+anova(lm.ta01) # mse: 2384
+st.resid <- resid/sqrt(2384)
+st.resid
+plot(X, st.resid)
+plot(X, st.resid, ylim=c(-3,3))
+abline(h=-3, col=2)
+abline(h=3, col=2)
+#Brown-Forsythe test
+d1 <- abs(resid[ta01$X<=70] - median(resid[ta01$X<=70]))
+d2 <- abs(resid[ta01$X>70] - median(resid[ta01$X>70]))
+ds <- c(d1,d2)
+t.test(d1,d2, var.eqaul=TRUE)
+#pvalue=0.201 -> 기각할 수없다(유의수준 0.05)
+#따라서 reg model에서 등분산성은 위배되지 않았다.
+
+#Bresch-Pagan test in Simple Linear Regression
+#ncvTest function in car package required
+#For illustration purpose, we use Table 1 in Chapter 1.
+ta01<-read.table("CH01TA01.txt"); names(ta01)<-c("X", "Y") ; ta01.lm <- lm(Y~X, data=ta01)
+par(mfrow=c(2,2)) #한페이지에 plot 을 4개 그리란 것
+plot(ta01$X, ta01.lm$resid, xlab="X", ylab="residuals");
+plot(ta01.lm$fitted, ta01.lm$resid, xlab="fitted values", ylab="residuals")
+qqnorm(ta01.lm$resid); qqline(ta01.lm$resid); plot(ta01.lm$resid)
+
+library(car)
+ncvTest(lm.ta01)
+#검정통계량:0.8209192, p-value: 0.36491 --> 유의수준 25%에서 귀무가설 기각
+
+resd <- ta01.lm$resid
+read.sq <- resd^2
+fitl <- lm(read.sq~X, data=ta01)
+fitl
+anova(fitl)
+anova(ta01.lm)
+(7896142/2)/(54825/25)^2  #검정통계량
+qchisq(0.95,1) #critical value
+#검정통계량 < critical value   --> 기각할 수 없음->등분산성 만족한다
+1-pchisq(0.820933,1)  #p-value
+
+
+# Lack of Fit in Simple Linear Regression
+ta305 <- read.table("CH03TA305.txt"); names(ta305) <- c("I","X", "Y")
+with(plot(X,Y), data=ta305);  #with 쓰면 data를 attach하지 않고도 쓸 수 있다.
+
+new <- data.frame(mean=with(tapply(Y, factor(X),mean), data=ta305))
+new <- data.frame(X= as.numeric(row.names(new)), new)
+full <- lm(Y~factor(X), data=ta305); smaller <- lm(Y~X, data=ta305)
+
+lines(ta305$X, smaller$fitted, col=3, lwd=2); with(lines(X,mean, col=2, lwd=2), data=new)
+#빨간선이 y의 평균값을 연결한 선. 초록선이 reg line
+anova(smaller)
+anova(full)
+#1148 :pure error
+# 14741.6-1148이 lack of fit
+((14741.6-1148)/(9-5)) /229.6   #검정통계량
+qf(0.95,4,5) #f값 
+#검정통계량 > critical value  -> 귀무가설 기각
+1-pf(14.80139,4,5)  #유의수준 5%에서 기각  --> 선형성이 깨진다.
+
+anova(smaller, full)  #에 다나옴
+
+
+#Box-Cox Transformation in Simple Linear Regression
+#powerTransform and boxCox function are in car package.
+#This example illustrates Box-Cox transformation using Table 8 in Chapter 3.
+ta08 <- read.table("CH03TA08.TXT"); names(ta08) <- c("X", "Y", "logY")
+ta08.lm <- lm(logY~X, data=ta08)
+par(mfrow=c(2,2))
+qqnorm(ta08.lm$resid); qqline(ta08.lm$resid); with(plot(X, ta08.lm$resid), data=ta08)
+plot(ta08.lm$fitted, ta08.lm$resid); plot(ta08.lm$resid)
+par(mfrow=c(1,2)); p1 <- powerTransform (ta08.lm)
+summary(p1)
+library(MASS)
+boxcox(ta08.lm)
+ta08.lm2 <- lm(Y~X, data=ta08)
+p2 <- powerTransform(Y~X,ta08)
+p22<- powerTransform (ta08.lm2)
+boxCox(ta08.lm2) 
+summary(p2)
+summary(p22)
+
+#4번
+#a)
+sc<-read.table("Solution concentration.txt")
+names(sc)<-c("Y","X")
+summary(sc)
+
+#b)
+full<-lm(Y~factor(X),data=sc)
+smaller<-lm(Y~X,data=sc)
+anova(smaller, full)
+(( 2.9247-0.1574 )/(13-10))/(0.1574 /10)
+qf(0.95,3,10)
+#c)
+#d)
+with(plot(X,Y),data = sc)
+#e)
+sc.lm<-lm(Y~X,data=sc)
+library(MASS)
+boxcox(sc.lm,c(-0.2,-0.1,0,0.1,0.2))
+#f)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

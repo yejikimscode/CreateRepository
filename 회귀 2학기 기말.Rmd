@@ -1,0 +1,273 @@
+---
+title: "2학기 기말"
+output: word_document
+---
+
+```{r}
+###5.24
+#a. 
+#(1)
+X=matrix(c(1,1,1,1,1,1,4,1,2,3,3,4),ncol=2)
+Y=matrix(c(16,5,10,15,13,22))
+b=solve(t(X)%*%X)%*%t(X)%*%Y ; b
+data5.24=read.table("CH05PR05.txt");names(data5.24)<-c("Y","X")
+lm5.24 = lm(Y~X, data=data5.24); summary(lm5.24);
+#(2)
+resid=matrix(lm5.24$residuals) ; resid
+J=matrix(c(1),nrow=6,ncol=6)
+#(3)
+SSR=t(b)%*%t(X)%*%Y-1/6*t(Y)%*%J%*%Y ; SSR
+#(4)
+SSE=t(Y)%*%Y-t(b)%*%t(X)%*%Y
+SSE
+#(5)
+anova(lm5.24)
+MSE=5.073
+s2.b=MSE*solve(t(X)%*%X)
+s2.b
+#(6)
+#캡쳐참고
+#(7)
+
+#b. (a5)에서 (1,1)은 s^2{b0}이고, (1,2) and (2,1)은 s{b1,b0} 이며, (2,2)는 s^2{b1} 이다. 따라서
+# (1) s{b0,b1}=-2.103439
+# (2) s^2{b0}=6.805244
+sqrt(0.7423902)
+# (3) s{b1}=0.8616207
+
+#c.
+H=X%*%solve(t(X)%*%X)%*%t(X)
+H
+
+#d.
+I=diag(6)
+s2.e=MSE*(I-H)
+s2.e
+
+##1(6.18) 우수과제 보면서 풀기
+#a. Prepare a stem-and-leaf plot for each predictor variable. What information do these plots provide?  (6.9-a)
+cp<-read.table("final01.txt");
+names(cp) <- c("Y","X1","X2", "X3", "X4")
+attach(cp)
+stem(X1) 
+#고르게 분포되어 있다.
+stem(X2)
+#고른편이다.
+stem(X3)
+#0점대 몰려있다
+stem(X4)
+#초반에 조금 몰렸으나 고른 편이다.
+
+#b Obtain the scatter plot matrix and the correlation matrix. Interpret these and state your principal findings. (6.9-c)
+pairs(cp)
+pairs(as.matrix(cp))  #그래프 노트에 설명
+cor(cp)
+# 1과 Y는 음의 상관관계를 가지고 있다.
+# X3은 Y는 약한 상관관계를 가지고 있다.
+# X3은 X4는 약한 상관관계를 가지고 있다.
+
+#c Fit regression model (1) for four predictor variables to the data. State the estimated regression function. (6.10-a)
+options(scipen = 999)
+lm.cp<-lm(Y~X1+X2+X3+X4, data=cp)
+summary(lm.cp)  
+##Y_hat=12.200585882 -0.142033644X1 + 0.282016530X2 + 0.619343503X3 + 0.000007924X4
+
+#d Obtain the residuals and prepare a box plot of the residuals. Does the distribution appear to be fairly symmetrical?
+lm.cp$resid
+boxplot(lm.cp$resid)
+##3-4개의 outer가 보이지만 0을 중심으로 symmetrical해 보인다. 
+
+#e Plot the residuals against 𝑌̂, each predictor variable, and each two-factor interaction term on separate graphs. Also prepare a normal probability plot. Analyze your plots and summarize your findings.
+plot(lm.cp$fitted, lm.cp$resid) #고르게 분포되어 있다.
+plot(X1,lm.cp$resid) #고르게 분포되어 있다.
+plot(X2,lm.cp$resid) #고르게 분포되어 있다.
+plot(X3,lm.cp$resid) #outlier도 있고 0쪽에 치우쳐져있다.
+plot(X4,lm.cp$resid) #고르게 분포되어 있다.
+library(scatterplot3d)
+scatterplot3d(X1,X2,lm.cp$resid)
+scatterplot3d(X2,X4,lm.cp$resid)
+scatterplot3d(X3,X4,lm.cp$resid)
+qqnorm(lm.cp$resid)
+qqline(lm.cp$resid)
+#완벽한 직선의 모양은 아니지만 많이 벗어나지 않는다. 따라서 ei는 정규성은 만족한다
+
+#f Can you conduct a formal test for lack of fit here?
+# No. X값에서 겹치는 Y값이 없다. 
+
+#g Divide the 81 cases into two groups, placing the 40 cases with the smallest fitted values 𝑌̂𝑖 into group 1 and the remaining cases into group 2. Conduct the Brown-Forsythe test for constancy of the error variance, using 𝛼 = .05. State the decision and conclusion.
+ord <- order(lm.cp$fitted)
+cp.ord <- cp[ord, ]
+cp.lm <- lm(Y~X1+X2+X3+X4, data=cp.ord)
+resd1.ord <- cp.lm$resid
+d1 <- abs(resd1.ord[1:40]-median(resd1.ord[1:40]))
+d2 <- abs(resd1.ord[41:81]-median(resd1.ord[41:81]))
+t.test(d1, d2, var.equal = T)
+qt(0.975,79)  #𝛼 = .05 #alpha=0.05일때 t(1-a/2)이므로 0.975쓴다.
+#H0:sigma^2 is constant
+#H1:sigma^2 is not constant
+#t*=0.5521~F79
+# -1.99045<=t<=1.99045 범위 안에 0.5521이 있으므로 기각하지 않는다.
+#따라서 sigma^2 는 constant
+
+##2(7.27) Refer to Commercial properties Problem 1
+#a Fit first-order linear regression model (2) for relating rental rates (𝑌) to property age (𝑋1 ) and size (𝑋4). State the fitted regression function. 
+lm.cp <- lm(Y~X1+X4, data = cp)
+summary(lm.cp)
+# Y_hat =14.361276607-0.114467046X1+ 0.000010445X4
+
+#b Compare the estimated regression coefficients for property age and size with the corresponding coefficients obtained in Problem 1.c. What do you find? 
+lm.cp<-lm(Y~X1+X2+X3+X4, data=cp)
+summary(lm.cp)
+# Y_hat =  12.200585882-0.142033644X1+0.282016530X2+0.619343503X3+ 0.000007924X4
+# (a) 에서 구한 추정 회귀식 :Y_hat =14.361276607-0.114467046X1+ 0.000010445X4
+#  Problem 1.c.에서 구한 추정 회귀식: Y_hat =  12.200585882-0.142033644X1+0.282016530X2+0.619343503X3+ 0.000007924X4
+# X2,X3이 추가되자 b0,b1,b4가 감소했다. 
+
+#c Does 𝑆𝑆𝑅(𝑋4) equal 𝑆𝑆𝑅(𝑋4|𝑋3) here? Does 𝑆𝑆𝑅(𝑋1) equal 𝑆𝑆𝑅(𝑋1|𝑋3)? 
+lm.4<-lm(Y~X4, data=cp); anova(lm.4) #𝑆𝑆𝑅(𝑋4) = 67.775 
+lm.43<-lm(Y~X3+X4, data=cp); anova(lm.43) # 𝑆𝑆𝑅(𝑋4|𝑋3) =66.858 
+#NO
+
+lm.1<-lm(Y~X1, data=cp); anova(lm.1) #𝑆𝑆𝑅(𝑋1) = 14.819 
+lm.13<-lm(Y~X3+X1, data=cp); anova(lm.13) # 𝑆𝑆𝑅(𝑋1|𝑋3) =13.774  
+#NO
+
+#d Refer to the correlation matrix obtained in Problem 1.b. What bearing does this have on your findings in parts (b) and (c)?
+library(Hmisc)
+cor(cp)
+# X3과 X4의 상관관계는  0.08061073로 0.5보다 작다.
+# X3과 X1의 상관관계는  -0.2526635로 0.5보다 작다.
+# 따라서 X4와 X1 만 있는 모형에서 X3이 추가되어도 계수가 변하지 않는다. SSR 또한 달라지지 않는다.
+
+##3(8.40)
+#a Fit a first-order linear regression model. Let 𝑋4 = 1 if hospital has medical school affiliation and 0 if not. 
+sen <- read.table("final03.txt")
+names(sen) <- c("N1", "X1", "X2", "Y", "N5", "X3", "N7", "X4") ; attach(sen)
+lm.sen<-lm(Y~X1+X2+X3+X4, data=sen) ; summary(lm.sen)
+
+##Yhat=1.43301 + 0.28882X1 - 0.01805X2 + 0.01995X3 - 0.28782X4
+
+#b Estimate the effect of medical school affiliation on infection risk using a 98 percent confidence interval. Interpret your interval estimate.
+# s(b4) = 0.30668 , alpha=0.02
+# b4=-0.28782
+qt(0.99, 108)
+-0.28782-0.30668*qt(0.99,108)
+-0.28782+0.30668*qt(0.99,108)
+# -1.012006 < b4 < 0.4363656
+
+#c It has been suggested that the effect of medical school affiliation on infection risk may interact with the effects of age and routine chest X-ray ratio. Add appropriate interaction terms to the regression model, fit the revised regression model, and test whether the interaction terms are helpful; use 𝛼 = .10. State the alternatives, decision rule, and conclusion. 
+lm.sen_ = lm(Y~X1+X2+X3+X4+X2:X4+X3:X4, data=sen)
+summary(lm.sen_)
+anova(lm.sen_)
+summary(lm.sen)
+anova(lm.sen)
+##Yhat=-10.39627 + 0.26414X1 + 0.28868X2 -0.02383X3 
+## + 5.69520X4 - 0.15576X2X3 + 0.02406X3X4
+##H0:b5=b6=0 / H1:not both b5, b6 are equal to 0
+##SSR(X2X4,X3X4|X1,X2,X3,X4)
+##=SSE(X1,X2,X3,X4)-SSE(X1,X2,X3,X4,X2X4,X3X4)
+127.243-122.047
+(5.196/2)/(122.047/106)
+##F*=(5.196/2)/(122.047/106)=2.256409
+qf(0.9, 2, 106) #=2.3533
+##alpha=0.1, df=108-2
+##F*>2.3533, H0 기각X, b5=b6=0
+
+
+
+##4(9.15)  (9.16)
+# a. Obtain the scatter plot matrix. Also obtain the correlation matrix of the 𝑋 variables. What do the scatter plots suggest about the nature of the functional relationship between the response variable 𝑌 and each predictor variable? Discuss. Are any serious multicollinearity problems evident? Explain.
+kf<-read.table("final04.txt");
+names(kf) <- c("Y","X1","X2", "X3")
+attach(kf)
+pairs(kf)
+pairs(as.matrix(kf))
+cor(kf)
+#Y에 X1과 X2는 음의 상관관계를 가지고 있고 X3는 양의 상관관계를 가지고 있다.
+# X1은 Y와 강한 상관관계를 가지고 있다.
+
+# b. Fit the multiple regression function containing the three predictor variables as first-order terms. Does it appear that all predictor variables should be retained?
+lm.kf<-lm(Y~X1+X2+X3, data=kf)
+summary(lm.kf)
+
+#Y_hat=120.0473 - 39.9393X1 - 0.7368X2 + 0.7764X3
+#각각의 predictor의 p-value가 0에 근사하다. 모두 regression에 포함되는 것이 좋다.
+
+# c. Using first-order and second-order terms for each of the three predictor variables (centered around the mean) in the pool of potential 𝑋 variables (including cross products of the first-order terms), find the three best hierarchical subset regression models according to the 𝐶𝑝 criterion.
+X1=kf$X1-mean(kf$X1)
+X2=kf$X2-mean(kf$X2)
+X3=kf$X3-mean(kf$X3)
+reg0=lm(Y~X1+X2+X3+X1:X2+X3^2, data=kf) ; summary(reg0)
+reg1=lm(Y~X1+X2+X3+X1:X2+X2^2+X3^2, data=kf) ; summary(reg1)
+reg2=lm(Y~X1+X2+X3+X1:X3+X3^2, data=kf) ; summary(reg2)
+reg3=lm(Y~X1+X2+X3+X1:X2+X1:X3+X3^2, data=kf) ; summary(reg3)
+reg4=lm(Y~X1+X2+X3+X1:X2+X2^2+X3^2, data=kf) ; summary(reg4)
+##cp값 구하는법 찾기
+
+library(car); extractAIC(reg2, scale=sigmaHat(reg3)^2)
+# reg3: 가장 큰 모형 넣어주는 것. p보다 작으면 좋은것. 작을수록 좋음
+extractAIC(reg2, scale=sigmaHat(reg3)^2)
+extractAIC(reg1, scale=sigmaHat(reg3)^2)
+extractAIC(reg2, scale=sigmaHat(reg3)^2)
+extractAIC(reg3, scale=sigmaHat(reg3)^2)
+extractAIC(reg4, scale=sigmaHat(reg3)^2)
+
+# d. Is there much difference in 𝐶𝑝 for the three best subset models?
+##no. Cp값이 많이 다르지 않기 때문이다.
+
+##5(8.21)   #노트(체그)
+#a. Develop the response function for each type of protection category.
+#b. For each of the following questions, specify the alternatives 𝐻0 and 𝐻𝛼 for the appropriate test: (1) With 𝑋1 fixed, does wearing a bump cap reduce the expected severity of injury as compared with wearing no protection? (2) With 𝑋1 fixed, is the expected severity of injury the same when wearing a hard hat as when wearing a bump cap?
+
+##6(8.24) 
+# a. Plot the sample data for the two populations as a symbolic scatter plot. Does the regression relation appear to be the same for the two populations?
+final06=read.table("final06.txt")
+names(final06)=c("Y","X1","X2")
+pairs(cp)
+ord=order(final06$X2)
+final06.2=final06[ord, ]
+plot(final06.2$X1[1:48], final06.2$Y[1:48]) #X2=0일떄
+plot(final06.2$X1[49:64], final06.2$Y[49:64]) #X2=1일떄
+##X1과 Y는 강한 양의 상관관계임을 알 수 있다.
+##X2와 Y는 범주형 변수로 plot만으로는 판단 불가하다.
+##X2=0, X2=1일 때 모두 X1과 Y는 양의 상관관계를 보인다.
+
+# b. Test for identity of the regression functions for dwellings on corner lots and dwellings in other locations: control the risk of TypeⅠerror at 0.05. State the alternatives, decision rule, and conclusion.
+lm.final06.1=lm(Y~X1+X2+X1*X2, data=final06);summary(lm.final06.1)
+anova(lm.final06.1)
+
+lm.final06.2=lm(Y~X1, data=final06);summary(lm.final06.2)
+anova(lm.final06.2)
+
+1475.3-90901
+(566.2/2)/(909.1/60)
+qf(0.95, 2, 60) 
+1-pf(18.6844, 2, 60)
+##Yhat=-126.9052 + 2.7759X1 + 76.0215X2 - 1.1075X1*X2
+##H0:b2=b3=0 / H1:not both b2, b3 are equal to 0
+##SSR(X2,X1:X2|X1)=366.2
+##test statistic F*=18.6844 / p-value=0.0000005
+#=3.150411
+##F*>3.150411 이므로 H0기각
+##not both b2, b3 are equal to 0
+
+
+# c. Plot the estimated regression functions for the two populations and describe the nature of the differences between them. 
+fit.final06=lm(Y~X1+X2+X1*X2, data=final06)
+summary(fit.final06)
+
+plot(final06$X1, final06$Y)
+-126.9052+76.0215
+2.7759-1.1075
+abline(-50.8837,1.6684)  #X2=1일때
+abline(-126.9052,2.7759)  #X2=0일때
+
+##교호작용으로 인해 X2가 다른 값으로 고정될 경우,
+##기울기와 intercept가 모두 달라진다.
+##Yhat=-126.9052 + 2.7759X1 (X2=0) : noncorner lots
+##Yhat=-50.8837 + 1.6684 (X2=1) : corner lots
+
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

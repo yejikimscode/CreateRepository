@@ -1,0 +1,111 @@
+---
+---
+
+```{r}
+fi05 <- read.table("CH06FI05.TXT"); names(fi05) <- c("X1", "X2","Y"); library(car)
+head(fi05)
+dim(fi05)
+### 3D Scatter plot matrix in R : scatter3D( )
+library(plot3D)
+par(mfrow=c(2,2))  #4가지 플랏
+with(data=fi05, scatter3D(X1, Y, X2, phi=20, theta=20, xlab="X1", ylab="X2", zlab="Y", pch=20,
+col=1))
+with(data=fi05, scatter3D(X1, Y, X2, phi=20, theta=40, xlab="X1", ylab="X2", zlab="Y", pch=20,
+col=1))
+with(data=fi05, scatter3D(X1, Y, X2, phi=20, theta=60, xlab="X1", ylab="X2", zlab="Y", pch=20,
+col=1))
+with(data=fi05, scatter3D(X1, Y, X2, phi=20, theta=80, xlab="X1", ylab="X2", zlab="Y", pch=20,
+col=1))
+
+### Scatter plot matrix in R : pairs( )
+pairs(fi05) #바람직하다.
+# Note that a matrix can be used as the argument of the function pairs
+
+### Multiple linear regression fit with lm function
+fi05.lm <- lm(Y~X1+X2, data=fi05); summary(fi05.lm) ; 
+# tvalue= 각각estimate/ 각각std error  
+#tvalue 순서대로
+#-> beta0 이 0이냐 아니냐의 t값
+#-> beta1 이 0이냐 아니냐의 t값
+#-> beta2 이 0이냐 아니냐의 t값
+# pvalue: Pr(>|t|) 
+#Residual standard error: sqrt(MSE)
+#df: 21-3=18
+anova(fi05.lm)
+# Adjusted R-squared: (1-MSE)/MSTo
+# SSE: 2180.9 
+# SSR: 23371.8 + 643.5 
+# MSR : SSR/2
+# F statistic(F*): MSR / 121.2(=MSE) 
+
+resd <- fi05.lm$resid; fitted <- fi05.lm$fitted
+mse <- summary(fi05.lm)$sigma^2
+
+resd #residual
+fitted
+mse
+
+#response plot 그리기
+linear<-function(x,z)(-68.8571+ 1.4546x +9.3655z)
+fitted.y<-with(data = fi05, outer(X1,X2,linear))
+with(data = fi05, persp3D(X1,X2,fitted.y,col=1))
+
+## estimating beta through design matrix
+Dx <- cbind(rep(1,21), fi05$X1, fi05$X2)   #design matrix니까 rep(1,21)로 1을 21개 넣어준것 #dim 에서 21나왔엇다.
+Dx
+beta <- solve(t(Dx)%*%Dx)%*%t(Dx)%*%fi05$Y
+#((X)^t(X))^-1 :t(Dx)%*%Dx)
+#((X)^t)*Y :t(Dx)%*%fi05$Y
+beta
+
+cov.beta <- solve(t(Dx)%*%Dx)*mse
+sqrt(cov.beta[1,1]); sqrt(cov.beta[2,2]); sqrt(cov.beta[3,3])
+
+
+### Model diagnosis
+par(mfrow=c(2,2))
+qqnorm(resd);qqline(resd)
+plot(fitted, resd)
+with(plot(fitted, Y), data=fi05)
+boxCox(fi05.lm)
+ncvTest(fi05.lm);
+#검정통계량:0.2357065
+#pvalue: 0.62732
+#기각할 수 없다.
+bc <- powerTransform(fi05.lm); summary(bc)
+#Likelihood ratio test that no transformation is needed
+
+### Interval estimation and prediction for multiple regression
+esti.95<-cbind(fi05, predict.lm(fi05.lm, newdata=fi05, se.fit=TRUE, interval="confidence"))
+#confidence :평균에 대한 CI
+#prediction은 prediction 쓰면 된다.
+esti.95 #95% CI(신뢰귀간)
+X.h <- data.frame(1, X1=65.4, X2=17.6) # X1=65.4, X2=17.6 특별히 관심 있는 값
+X.h
+
+## Estimation
+#prediction 이 아니라 X.h에 대한 평균에 대한 CI를 구하겠다
+predict.lm(fi05.lm, newdata=X.h, se.fit=TRUE, interval="confidence")
+#점추정값(평균의 추정값):191.1039
+#95% cI:(185.2911, 196.9168)
+predict.lm(fi05.lm, newdata=X.h, se.fit=TRUE, interval="prediction")
+#점추정값:191.1039으로 같음
+#95% cI:(167.2589, 214.949) 더 넓어짐
+
+se.X.h <- c(sqrt (as.matrix(X.h)%*%cov.beta%*% t(as.matrix(X.h)) ))
+se.X.h  # $se.fit과 같음. standard error
+EY <- c(as.matrix(X.h)%*% fi05.lm$coef)
+EY  #평균의 추정값
+c(EY- qt(0.975, 18)*se.X.h, EY+qt(0.975, 18)*se.X.h) #95% CI
+
+## Prediction
+predict.lm(fi05.lm, newdata=X.h, se.fit=TRUE, interval="prediction")
+se.X.h.pred <- c(sqrt (mse+as.matrix(X.h)%*%cov.beta%*% t(as.matrix(X.h)) ))
+se.X.h.pred #Prediction에서 추정된 standard error
+EY <- c(as.matrix(X.h)%*% fi05.lm$coef)
+EY
+c(EY- qt(0.975, 18)*se.X.h.pred, EY+qt(0.975, 18)*se.X.h.pred)
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

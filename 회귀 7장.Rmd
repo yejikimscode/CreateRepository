@@ -1,0 +1,103 @@
+---
+title: "7장 수업"
+output: word_document
+---
+
+```{r}
+#7장 수업
+#extra sum of square
+ta701<-read.table("CH07TA01.txt"); names(ta701) <- c("X1","X2", "X3", "Y")
+#fit
+lm.123<- lm(Y~X1+X2+X3, data=ta701);anova(lm.123)
+#                     Df Sum Sq Mean Sq F value    Pr(>F)    
+# X1 SSR(X1)           1 352.27  352.27 57.2768 1.131e-06 ***
+# X2 SSR(X2|X1)        1  33.17   33.17  5.3931   0.03373 *  
+# X3 SSR(X3|X1,X2)     1  11.55   11.55  1.8773   0.18956  
+
+#curret model: X1인 것.
+#new : X1+X2
+lm.12<- lm(Y~X1+X2, data=ta701);anova(lm.12)
+#33.17: SSR(X2|X1)
+
+lm.132<- lm(Y~X1+X3+X2, data=ta701);anova(lm.132)
+#7.53 : SSR(X2|X1,X3)
+#                      Df Sum Sq Mean Sq F value    Pr(>F)    
+# X1 SSR(X1)            1 352.27  352.27 57.2768 1.131e-06 ***
+# X3 SSR(X3|X1)         1  37.19   37.19  6.0461   0.02571 *  
+# X2 X3 SSR(X2|X1,X3)   1   7.53    7.53  1.2242   0.28489  
+summary(lm.132)
+(-1.106)^2 #X2의 F value와 비슷하게 나온다.
+
+# H0: beta1 = beta2
+# H1: beta1 =! beta2
+# under H0, XC=X1+X2
+XC<-ta701$X1 +ta701$X2
+XC
+lm.1_23<- lm(Y~XC+X3, data = ta701)
+lm.123<- lm(Y~X1+X2+X3, data=ta701);
+summary(lm.1_23)
+anova(lm.1_23,lm.123)   # 5% 귀무가설 기각 못함
+
+## Fitting three predictors of X1, X2, X3 sequentially
+lm.1 <- lm(Y~X1, data=ta701);
+lm.12<- lm(Y~X1+X2, data=ta701);
+lm.123<- lm(Y~X1+X2+X3, data=ta701);
+summary(lm.1);  #Pr(>|t|)가3.02e-06 ***한걸 보아 significant한걸 알수잇다.
+#Estimate로 beta1 추정 값 알 수 있. 0.8572이다
+summary(lm.12);  #x1 이 Pr(>|t|)가 0.4737 로 나와서significant안해지고 x2가 Pr(>|t|)가 0.0369 *나와서 significant해짐
+#beta1 추정 값: 0.2224, beta1 추정 값: 0.6594
+summary(lm.123);
+#predictor 가 추가함에 따라서 추정 beta 값이 바뀐다.
+
+anova(lm.1)
+anova(lm.12)
+anova(lm.123)
+#total sum of square(SST) : 
+#lm.1 에서 
+143.12+352.27 #SST
+#lm.12 에서
+352.27+33.17+109.95  #SST
+# 값이 같다
+#또한 predictor 가 추가함에 따라서 그 전에 있었던 모형보다 SSE가 줄어든다. 줄어든 만큼 추가한 predictor에게 간다.
+
+## Fitting all three predictors of X1, X2, X3 with different orders
+# 결론: fitting 순서는 중요하지 않다.
+lm.123<- lm(Y~X1+X2+X3, data=ta701); 
+lm.231<- lm(Y~X2+X3+X1, data=ta701);
+lm.312<- lm(Y~X3+X1+X2, data=ta701);  
+summary(lm.123); summary(lm.231);summary(lm.312);
+#순서에 상관없이 추정값은 동일하다. st error, tvalue, pvalue도 동일하다
+anova(lm.123);anova(lm.231); anova(lm.312);
+#Sum Sq(SST)가 바뀜,다 바뀌는데 Residuals 98.40로 항상 동일
+#fitting 은 동일한 결과를 갖지만 anova 테이블은 다른 결과를 준다.
+
+## Fitting the two of the three
+lm.12<- lm(Y~X1+X2, data=ta701); summary(lm.12); anova(lm.12)
+lm.23<- lm(Y~X2+X3, data=ta701); summary(lm.23); anova(lm.23)
+lm.31<- lm(Y~X3+X1, data=ta701); summary(lm.31); anova(lm.31)
+lm.1 <- lm(Y~X1, data=ta701); summary(lm.1); anova(lm.1)
+lm.2 <- lm(Y~X2, data=ta701); summary(lm.2); anova(lm.2)
+lm.3 <- lm(Y~X3, data=ta701); summary(lm.3); anova(lm.3)
+
+## Comparing the three fits using anova() function
+anova(lm.1); anova(lm.12); anova(lm.123)
+anova(lm.2); anova(lm.23); anova(lm.231)
+anova(lm.3); anova(lm.31); anova(lm.312)
+
+## option1
+mean.x1 <- mean(ta701$X1); var.x1 <- var(ta701$X1)
+mean.x2 <- mean(ta701$X2); var.x2 <- var(ta701$X2)
+mean.x3 <- mean(ta701$X3); var.x3 <- var(ta701$X3)
+mean.y <- mean(ta701$Y); var.y <- var(ta701$Y)
+X1s <- (ta701$X1-mean.x1)/sqrt(var.x1)
+X2s <- (ta701$X2-mean.x2)/sqrt(var.x2)
+X3s <- (ta701$X3-mean.x3)/sqrt(var.x3)
+Ys <- (ta701$Y-mean.y)/sqrt(var.y)
+stan.reg1 <- lm(Ys ~ X1s + X2s + X3s); summary(stan.reg1)
+
+## option2
+ta701.s <- as.data.frame(scale(ta701))
+stan.reg2 <- lm(Y~X1+X2+X3, data=ta701.s); summary(stan.reg2)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

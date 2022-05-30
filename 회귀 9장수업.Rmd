@@ -1,0 +1,122 @@
+---
+title: "9장 수업"
+output: word_document
+---
+
+```{r}
+
+### Variable Selection
+ex<-read.table("CH09TA01.txt")
+names(ex)<-c("X1","X2","X3","X4","X5","X6","X7","X8","Y","logY")
+X<-cbind(1, ex$X1,ex$X2,ex$X3,ex$X4)
+Y<-ex$Y; logY<-ex$logY
+##Basic plots
+hist(ex$Y); hist(ex$logY); boxplot(ex$logY)  #두개 비교
+## Fitting
+reg0 <- lm(Y~1, data=ex); reg0.ln <- lm(logY~1, data=ex) ## No predictor regression
+reg1<-lm(Y~X1+X2+X3+X4, data=ex)
+reg2<-lm(logY~X1+X2+X3+X4, data=ex)
+reg3<-lm(logY~X1+X2+X3+X4+X1:X2, data=ex)
+summary(reg3)  #전부 유효하지 않음
+summary(reg2)  #X4 제외하고 전부 유효
+
+## Diagnosis plots
+#residual plot
+par(mfrow=c(2,2)); plot(reg1) ; plot(reg2)
+library(car)
+ncvTest(reg1)
+#pvalue: p = 0.00000022607 -> 유의수준 5%에서 귀무가설 기각-> constant variation 이 깨진다.
+boxCox(reg1)  #0이 안에 들어가 있으면 log scale의 transformation이 적정하다.
+
+#correlation보기
+cor(ex[,c(1:4,10),])
+pairs(ex[,c(1:4,10),])
+
+## Variable selection 변수선택
+#AIC: 작을수록 좋음
+extractAIC(reg3) # 추정하여야될 모수개수: 6.0000, AIc: -142.5935
+extractAIC(reg2) #AIC 더 작아짐. reg3보단 reg2가 낫다.
+#BIC: 작을수록 좋음
+extractAIC(reg3, k=log(dim(reg3$model)[1]) )
+# dim(reg3$model)[1]): sample 사이즈 의미
+# dim(reg3$model)[1]: returns sample sizes for the lm object of “reg3”
+#Mallow Cp: 
+library(car); extractAIC(reg2, scale=sigmaHat(reg3)^2)
+library(car); extractAIC(reg1, scale=sigmaHat(reg3)^2)
+library(car); extractAIC(reg3, scale=sigmaHat(reg3)^2)
+
+# “sigmaHat” function is in car package.
+#PRESS
+PRESS <- function(lm.object){
+sum( (residuals(lm.object)/(1 - hatvalues(lm.object)))^2 )}
+PRESS(reg3)
+## Stepwise selection
+## Caution: the stepwise selection starts from the given model.
+## Therefore, for forward selection, the given model should be smaller, and
+## the given model should be larger for backward selection.
+## Using AIC
+
+
+## Forward stepwise selection  #마지막 모델이 가장 적합한 모델 골라준 것
+step (reg0.ln, direction="both",
+scope=list(lower=~1, upper=~X1*X2+X3+X4) )
+## Forward selection
+step (reg0.ln, direction="forward",
+scope=list(lower=~1, upper=~X1*X2+X3+X4) )
+## Backward elimination
+step (reg3, direction="backward")
+## Using BIC
+step (reg0.ln, direction="both", k=log(dim(reg0.ln$model)[1]),
+scope=list(lower=~1, upper=~X1*X2+X3+X4) )
+step (reg0.ln, direction="forward", k=log(dim(reg0.ln$model)[1]),
+scope=list(lower=~1, upper=~X1*X2+X3+X4) )
+## dim(reg3$model)[1] returns the sample size of reg3.
+step (reg3, direction="backward", k=log(dim(reg3$model)[1]) )
+## Using Mallow Cp
+step (reg0.ln, direction="both", scale=sigmaHat(reg3)^2,
+scope=list(lower=~1, upper=~X1*X2+X3+X4) )
+step (reg0.ln, direction="forward", scale=sigmaHat(reg3)^2,
+scope=list(lower=~1, upper=~X1*X2+X3+X4) )
+step (reg3, direction="backward", scale=sigmaHat(reg3)^2 )
+reg.all <- lm(logY~X1+X2+X3+X4+X5+X6+X7+X8 , data=ex)
+## Stepwise forward selection upto logY|( X1+X2+X3+X4+X5+X6+X7+X8)
+step (reg0.ln, direction="both",
+scope=list(lower=~1, upper=~X1+X2+X3+X4+X5+X6+X8))
+step (reg0.ln, direction="both", k=log(dim(reg.all$model)[1]) ,
+scope=list(lower=~1, upper=~X1+X2+X3+X4+X5+X6+X8))
+step (reg0.ln, direction="both", scale=sigmaHat(reg.all)^2 ,
+scope=list(lower=~1, upper=~X1+X2+X3+X4+X5+X6+X8))
+## Forward selection upto logY|( X1+X2+X3+X4+X5+X6+X7+X8)
+reg.all <- lm(logY~X1+X2+X3+X4+X5+X6+X7+X8 , data=ex)
+step (reg0.ln, direction="forward",
+scope=list(lower=~1, upper=~X1+X2+X3+X4+X5+X6+X8))
+step (reg0.ln, direction="forward", k=log(dim(reg.all$model)[1]) ,
+scope=list(lower=~1, upper=~X1+X2+X3+X4+X5+X6+X8))
+step (reg0.ln, direction="forward", scale=sigmaHat(reg.all)^2 ,
+scope=list(lower=~1, upper=~X1+X2+X3+X4+X5+X6+X8))
+## Backward elimination from logY|( X1+X2+X3+X4+X5+X6+X7+X8)
+step (reg.all, direction="backward")
+step (reg.all, direction="backward", k=log(dim(reg.all$model)[1]))
+step (reg.all, direction="backward", scale=sigmaHat(reg.all)^2 )
+Model Validation
+test<-read.table("CH09TA05.txt")
+names(test)<-c("X1","X2","X3","X4","X5","X6","X7","X8","Y","logY")
+## Model Fitting
+## From Forward selection with SBC
+reg1 <- lm(logY~X1+X2+X3+X8, data=ex)
+## From Forward selection with Cp
+reg2 <- lm(logY~X1+X2+X3+X6+X8, data=ex)
+## From Forward selection with AIC
+reg3 <- lm(logY~X1+X2+X3+X5+X6+X8, data=ex)
+## Compute MSE
+## anova( ) function can be used for this.
+MSE1<- sum((ex$logY-predict(reg1, newdata=ex))^2)/(54-5)
+MSE2<- sum((ex$logY-predict(reg2, newdata=ex))^2)/(54-6)
+MSE3<- sum((ex$logY-predict(reg3, newdata=ex))^2)/(54-7)
+## Compute MSPR
+MSPR1<- sum( (test$logY - predict(reg1, newdata=test))^2)/54
+MSPR2<- sum( (test$logY - predict(reg2, newdata=test))^2)/54
+MSPR3<- sum( (test$logY - predict(reg3, newdata=test))^2)/54
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

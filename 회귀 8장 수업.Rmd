@@ -1,0 +1,56 @@
+---
+---
+
+```{r}
+#8장
+###qualitative predictors
+##categorical variables
+fit1<- lm(y~x1, data=eg.chap08, subset=1:20)
+summary(fit1)
+# 다시 듣기
+
+##Polynomial Regression
+ta801<-read.table("CH08TA01.txt"); names(ta801)<-c("Y","X1","X2")
+x1 <- c(-1,0,1,-1,0,0,0,1,-1,0,1); x2 <- c(-1,-1,-1,0,0,0,0,0,1,1,1)
+ta801s <- as.data.frame(scale(ta801))
+ta801t <- data.frame(ta801, x1=x1, x2=x2)
+cor(ta801t$X1, ta801t$X1^2); cor(ta801t$X2, ta801t$X2^2)
+cor(ta801t$x1, ta801t$x1^2); cor(ta801t$x2, ta801t$x2^2)
+cor(ta801s$X1, ta801s$X1^2); cor(ta801s$X2, ta801s$X2^2)
+fit0 <- lm(Y~x1+x2+I(x1^2)+I(x2^2)+x1*x2, data=ta801t)
+fit0s <- lm(Y~X1+X2+I(X1^2)+I(X2^2)+X1*X2, data=ta801s)
+fit0.ori <- lm(Y~X1+X2+I(X1^2)+I(X2^2)+X1*X2, data=ta801t)
+summary(fit0); summary(fit0s); summary(fit0.ori)
+## As expected, fit0.ori faces the multi-collinearity problem.
+## X1*X2 is called interaction effect.
+plot(fit0$fitted, fit0$resid, xlab="Fitted", ylab="Residual ")
+qqnorm(fit0$resid); qqline(fit0$resid)
+fit1 <- lm(Y~X1+X2, data=ta801); summary(fit1)
+anova(fit1, fit0)
+## General F-test between fit1 and fit0. Usually, a smaller model comes first.
+
+###Qualitative Predictors Regression
+soap<-read.table("CH08TA05.txt"); names(soap)<-c("Y","X1","X2")
+## In soap data, X2==1 indicates Production Line 1 and X2==0 does Production Line 2.
+## An qualitative predictor should be considered as factor in R.
+soap2 <- soap; soap2$X2 <- as.factor(soap$X2)
+is.factor(soap$X2); is.factor(soap2$X2)
+with(plot(X1, Y, pch=c(15,19)[X2], col=c(2,4)[X2]),data=soap2)
+legend(100,450, legend=c("Production Line 1", "Production Line 2"), pch=c(19,15), col=c(4,2))
+## The plot implies that there seems no interaction between X1 and X2.
+## In addition, the slope of X1 seems different from levels of X2.
+## Therefore, X2 should be important to the regression.
+fit<-lm(Y~X1* X2, data=soap2)
+fit1<-lm(Y~X1, data=soap)
+fit2<-lm(Y~X1+X2, data=soap2); summary(fit2)
+anova(fit)
+anova(fit1,fit)
+anova(fit2,fit)
+## fit2 seems more adequate than fit and fit1.
+## Under fit2, for Production Line 1: y=b0+b2 + b1*X1
+abline(a=fit2$coef[1]+fit2$coef[3], b=fit2$coef[2], col=4, lwd=2)
+## Under fit2, for Production Line 2: y=b0 + b1*X1
+abline(a=fit2$coef[1], b=fit2$coef[2], col=2, lwd=2)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

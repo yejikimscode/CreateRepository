@@ -1,0 +1,143 @@
+---
+title: "6장과제"
+output: word_document
+---
+
+```{r}
+# 6.1  Set up the X matrix ,md ~ vectOl' for each of the following regl'ession models (assume i == 1. ." .4):
+# a. Y; = f30 + f31 Xii + fh.XiI Xi2 + B;
+# b. log Y; = f30 + {31 Xii + f32Xi2 + B; 
+
+
+# 6.9 Grocery retailer. A large, national grocery retailer tracks productivity and costs of\ts facilities closely. Data below were obtained from a single distribution center for a one-year period. Each data point for each variable represents one week of activity. The variables included are the number of cases shipped (XI)' the indirect costs of the total labor hours as a percentage (X2 ), a qualitative predictor called holiday that is coded 1 if the week has a holiday and 0 otherwise (X3), and the total labor hours (Y). 
+#a. Prepare separate stem-and-leaf plots for the number of cases shipped Xi I and the indirect cost of the total hours Xi2. Are there any outlying cases present? Are there any gaps in the data?
+ch6.9<-read.table("CH06PR09.txt");
+names(ch6.9) <- c("X1","X2", "X3")
+attach(ch6.9)
+stem(X1,scale = 3)
+stem(X2)
+
+#b. The cases are given in consecutive weeks. Prepare a time plot for each predictor variable. - What do the plots show?
+plot(X1)
+plot(X2)
+plot(X3)
+
+# c. Obtain the scatter plot matrix and the correlation matrix. What information do these diagnostic aids provide here? 
+pairs(ch6.9)
+pairs(as.matrix(ch6.9))
+cor(ch6.9)
+
+
+# 6.10. Refer to Grocery retailer Problem 6.9.
+# a. Fit regression model (6.5) to the data for three predictor variables. State the estim~ted regression function. How are bl , b2 , and b3 interpreted here?
+options(scipen = 999)
+lm.ch6.9<-lm(Y~X1+X2+X3, data=ch6.9)
+summary(lm.ch6.9)  #식쓰기
+# b. Obtain the residuals and prepare a,box plot of the residuals. What information does this plot provide?
+lm.ch6.9$resid
+boxplot(lm.ch6.9$resid)
+# c. Plot the residuals against Y, X I, X2 , X3, and X I X2 on separate graphs. Also prepare a normal probability plot. Interpret the plots and su~arize your findings.
+plot(lm.ch6.9$fitted, lm.ch6.9$resid)
+plot(X1,lm.ch6.9$resid)
+plot(X2,lm.ch6.9$resid)
+plot(X3,lm.ch6.9$resid)
+plot(X1*X2,lm.ch6.9$resid)
+qqnorm(lm.ch6.9$resid)
+qqline(lm.ch6.9$resid)
+
+#d. Prepare a time plot of the residuals. Is there any indication.o1:hat the error terms are correlated? Discuss.
+plot(lm.ch6.9$resid)
+
+# e. Divide the 52 cases into two groups, placing the 26 cases with the smallest fitted values Y; into group I and the other 26 cases into group 2. Conduct the Brown-Forsythe test for constancy of the error variance, using (){ = .01. State the decision rule and conclusion.
+ord<-order(lm.ch6.9$fitted)
+ch6.9.ord<-ch6.9[ord,]
+ch6.9.lm<-lm(Y~X1+X2+X2, data=ch6.9.ord)
+resd6.9.ord<-ch6.9.lm$resid
+d1<-abs(resd6.9.ord[1:26]-median(resd6.9.ord[1:26]))
+d2<-abs(resd6.9.ord[1:26]-median(resd6.9.ord[1:26]))
+t.test(d1,d2,var.equal = TRUE)
+
+qt(0.995,50)  #alpha = .01
+
+# 6.11. Refel' to Grocery retailer Problem 6.9. Assume that regression model (6.5) fOi' three predictor variables with independent nonnal error terms is appropliate.
+# a. Test whethel' there is a regression relation, using level of significance .05. State the alternatives, decision nJle, and conclusion. What does yom' test result imply about fJl' f32, and fJ3? What is the P-value of the test?
+summary(lm.ch6.9)
+# b. Estimate fJl and fJ3jointly by the Bonferroni procedure, using a 95 percent family confidence coefficient. Interpret your results.
+anova(lm.ch6.9)
+# c. Calculate the coefficient of multiple determination R'l. How is this measure interpreted here?
+
+
+# 6.12. Refer to Grocery retailer Problem 6.9. Assume that regl-ession model (6.5) fonhree p1-edictor variables with independent normal error tenns is appropriate. 
+#a. Management desires simultaneous inten'<ll estimates ofthe totallabol' hours for the following five typical weekly shipments: 
+#Obtain the family of estimates using a 95 percent family confidence coefficient. Employ the Working-Hotelling 01' the Bonfemmi p1"ocedure, whichevel' is mOl-e efficient. 
+sqrt(4*qf(0.95,4,48))
+qt(0.995,48) 
+predict(lm.ch6.9, data.frame(X1=302000, X2=7.2, X3=0),interval="confidence", se.fit=TRUE)
+predict(lm.ch6.9, data.frame(X1=245000, X2=7.4, X3=0),interval="confidence", se.fit=TRUE)
+predict(lm.ch6.9, data.frame(X1=280000, X2=6.9, X3=0),interval="confidence", se.fit=TRUE)
+predict(lm.ch6.9, data.frame(X1=350000, X2=7.0, X3=0),interval="confidence", se.fit=TRUE)
+predict(lm.ch6.9, data.frame(X1=295000, X2=6.7, X3=1),interval="confidence", se.fit=TRUE)
+
+# b. FOI' the data in Problem 6.9 on which the regression fit is based, would you consider a shipment of 400,000 cases with an indirect percentage of 7.20 on a nonholiday week to be within the scope of the model? What about a shipment of 400,000 cases with an indil-ect percentage of9.9 on a nonholiday week? Support your answers by p1"eparing a l-elevant plot.
+
+
+#6.13 Refer to Grocery retailer Problem 6.9. Assume that regression model (6.5) for three predictor vaiables with independent normal el1"Or telms is app1"Opriate. Fom' separate shipments with the following chm'acteristics must be processed next month:
+#Management desires p1-edictions of the handling times for these shipments so that the actual handling times can be compared with the pl-edicted times to determine whether any are out of line. Develop the needed predictions, using the most efficient approach and a family confidence coefficient of 95 percent.
+Y<-matrix(Y,ncol=1)
+X<-cbind(1,X1,X2,X3)
+YY<-t(Y)%*%Y
+XX<-t(X)%*%X
+XY<-t(X)%*%Y
+XX.inv<-solve(XX)
+b<-XX.inv%*%XY
+b
+MSE<-20532
+tvalue<-qt(0.99375,48)
+tvalue
+
+
+
+#6.14. Refel' to Grocery retailer Problem 6.9. Assume that l-egression model (6.5) for three predicta'variables with independent nonnal en"Or terms is appropriate. Three new shipments are to be l-eceived, each with XiII = 282,000, XiII = 7.10, and X lt3 = O.
+#a. Obtain a 95 percent pl-ediction interval fOl' the mean handling time fOl' these shipments.
+#b. Convert the inteJ:val obtained in part (a) into a 95 percent prediction interval for the total labol' hours for the three shipments. 
+
+# 6.18. Commercial properties. A commercial real estate company evaluates vacancy rates, square footage, rental rates, and operating expenses for commercial properties in a large metropolitan area in order to provide clients with quantitative information upon which to make rental decisions. The data below are taken from 81 suburban commercial properties that are the newest, best located, most attractive, and expensive for five specific geographic areas. Shown here are the age (XI), operating expenses and taxes (Xl), vacancy rates (X3), total square footage (X4 ), and rental rates (Y). 
+# a. Prepare a stem-and-Ieaf plot for each predictor vmiable. What inf0fl;lation do these plots provide?
+# b. Obtain the scatter plot matrix and the correlation matrix. Interpret these and state your principal findings.
+# c. Fit regression model (6.5) for four predictor..-variables to the data. State the estimated regression function.
+# d. Obtain the residuals and prepare a box plot of the residuals. Does the distribution appear to be fairly symmetrical?
+
+#e. Plot the residuals against Y, each predictor variable, and each two-factor interaction tenn on separate graphs. Also prepare a normal probability plot. Analyze yom' plots and summalize your findings.
+# f. Can you conduct a fonnal test for lack of fit here?
+# g. Divide the 81 cases into two groups. placing the 40 cases with the smallest fitted values Yi_hat into group I and the remaining cases into group 2. Conduct the Brown-Forsythe test for constancy of the error variance, using ex = .05. State the decision rule and conclusion. 
+
+
+# 6.19. Refer to Commercial properties Problem 6.18. Assume that regression model (6.5) forfour predictor variables with independent nQ1111al error terms is approp1iate.
+# a. Test whether there is a regression relation; use ex = .05. State the alternatives. decision rule, and conclusion. What does your test imply about !31, !32, fJ3, and fJ4? What is the P-value of the test?
+# b. Estimate fJl, fh., fJ3, and fJ4 jointly by the Bonferroni procedure, using a 95 percent family confidence coefficient. Interpret your results.
+# c. CalcUlate R2 and interpret this measure.
+
+#6.20. Refer to Commercial properties Problem 6.18. Assume that regression model (6.5) for four predictor valiables with independent normal error terms is appropriate. The researcher wishes to obtain simultaneous interval estimates of the mean rental rates for four typical properties specified as follows:
+# Obtain the family of estimates using a 95 percent family confidence coefficient. Employ the most efficient p1·ocedure.
+
+
+# 621. Refer to Commercial properties Problem 6.18. Assume that regression model (6.5) for four predictor variables with independent normal error terms is appropriate. Three properties with the following characteristics did not have any rental information available. 
+# Develop separate prediction intervals for the rental rates of these properties, using a 95 percent statement confidence coefficient in each case. Can the rental rates of theslthree properties be predicted fairly precisely? What is the family confidence level for the set of three predictions?
+
+# 6.22. For each of the following regression models, indicate whether it is a general linear regression model. If it is not, state whether it can be expressed in the form of (6.7) by a suitable transformation: 
+
+
+# 6.23. (Calculus needed.) Consider the multiple regression model: 
+# a.' State the least squares criterion and derive the least squares estimators of 131 and 132.
+# b. Assuming that the Si are independent normal random variables, state the likelihood function and obtain the maximum likelihood estimators of 131 and 132. Are these the same as the least squares estimators?
+
+
+# 6.24. (Calculus needed.) Consider the multiple regression model
+# a. State the least squares criterion and derive the least squares normal equations.
+# b. State the likelihood function an~ explain why the maxim{dm likelihood estimators will be the same as the least squares estimators.
+
+# 6.25. An analyst wanted to fit the regression model Yi = ~ + 131 Xii + f32Xi2 + f33Xi3 + Si, i = 1, ... , n, by the method of least squares when it is known that 132 = 4. How can the analyst obtain the desired fit by using a multiple regression computer program?
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

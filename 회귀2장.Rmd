@@ -1,0 +1,41 @@
+---
+---
+
+```{r}
+getwd()
+ta01 <- read.table("CH01TA01.txt")
+
+names(ta01) <- c("X", "Y")
+ord <- order(ta01$X); ta01 <- ta01[ord,]
+attach(ta01)
+head(ta01)
+### Plotting
+plot(ta01$X,ta01$Y)
+### Fitting and AONVA table
+lm.ta01 <- lm(Y~X, data=ta01)  #Y: response X: predictor
+summary(lm.ta01)
+alpha<-0.05
+qt(1-alpha/2, 25-2)
+# tvalue(intercept,X)가 2.068658보다 크거나 -2.068658보다 작으면 귀무가설 기각
+sqrt(2384)
+summary(ta01)
+
+lm.ta01$fitted; lm.ta01$resid
+anova(lm.ta01)
+# MSE = 2384
+### Drawing regression lines
+lines(ta01$X, lm.ta01$fitted, col=2, lwd=2)
+### Confidence Interval for Estimation
+esti.95<-cbind(ta01, predict.lm(lm.ta01, newdata=ta01, se.fit=TRUE, interval="confidence",
+data=ta01))
+lines(ta01$X, esti.95$fit.upr, col=3, lwd=2); lines(ta01$X, esti.95$fit.lwr, col=3, lwd=2)
+### Confidence Interval for Prediction
+pred.95<-cbind(ta01, predict.lm(lm.ta01, newdata=ta01, se.fit=TRUE, interval="predict",
+data=ta01))
+pred.95
+lines(ta01$X, pred.95$fit.upr, col=4, lwd=2); lines(ta01$X, pred.95$fit.lwr, col=4, lwd=2)
+lgd <- c("fitted line", "Estimation Interval", "Prediction Interval")
+legend(25,500, lgd, col=c(2,3,4), lwd=c(2,2,2))
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
